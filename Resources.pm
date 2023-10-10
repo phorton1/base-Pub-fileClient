@@ -7,7 +7,7 @@
 # Derived classes should merge their values into the base
 # class $resources member.
 
-package Pub::fileClient::Resources;
+package apps::fileClient::Resources;
 use strict;
 use warnings;
 use threads;

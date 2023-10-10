@@ -11,7 +11,7 @@
 #    disables the remote pane
 
 
-package Pub::fileClient::Window;
+package apps::fileClient::Window;
 use strict;
 use warnings;
 use threads;
@@ -22,11 +22,11 @@ use Wx::Event qw(
 use Pub::Utils;
 use Pub::WX::Window;
 use Pub::FS::ClientSession;		# for $DEFAULT_PORT
-use Pub::fileClient::Pane;
-use Pub::fileClient::Prefs;
-use Pub::fileClient::Resources;
-use Pub::fileClient::PaneThread;
-use Pub::fileClient::PaneCommand;
+use apps::fileClient::Pane;
+use apps::fileClient::Prefs;
+use apps::fileClient::Resources;
+use apps::fileClient::PaneThread;
+use apps::fileClient::PaneCommand;
 use base qw(Wx::Window Pub::WX::Window);
 
 
@@ -121,8 +121,8 @@ sub new
 	$params1->{enabled_ctrl} = $ctrl2;
 
     $this->{splitter} = Wx::SplitterWindow->new($this, -1, [0, $PAGE_TOP]); # ,[400,400], wxSP_3D);
-    my $pane1 = $this->{pane1} = Pub::fileClient::Pane->new($this,$this->{splitter},$params0);
-    my $pane2 = $this->{pane2} = Pub::fileClient::Pane->new($this,$this->{splitter},$params1);
+    my $pane1 = $this->{pane1} = apps::fileClient::Pane->new($this,$this->{splitter},$params0);
+    my $pane2 = $this->{pane2} = apps::fileClient::Pane->new($this,$this->{splitter},$params1);
 
 	if (!$pane1 || !$pane2)
 	{

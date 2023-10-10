@@ -16,7 +16,7 @@
 # at any time.
 
 
-package Pub::fileClient::ProgressDialog;
+package apps::fileClient::ProgressDialog;
 use strict;
 use warnings;
 use threads;

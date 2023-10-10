@@ -2,7 +2,7 @@
 # Pub::FS::Prefs.pm
 #---------------------------------------
 
-package Pub::fileClient::Prefs;
+package apps::fileClient::Prefs;
 use strict;
 use warnings;
 use threads;

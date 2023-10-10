@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #-------------------------------------------------------
-# Pub::fileClient::ThreadedSession
+# apps::fileClient::ThreadedSession
 #-------------------------------------------------------
 # A ThreadedSession wraps a WX::Perl Thread around a ClientSession.
 # It is both WX aware, and intimitaly knowledgeable about FC::Pane.
@@ -13,7 +13,7 @@
 # the onThreadedEvent method.
 
 
-package Pub::fileClient::Pane;	# continued
+package apps::fileClient::Pane;	# continued
 use strict;
 use warnings;
 use threads;
@@ -22,7 +22,7 @@ use Wx qw(:everything);
 use Pub::Utils;
 use Pub::FS::FileInfo;
 use Pub::FS::Session;		# for $PROTOCOL_XXX
-use Pub::fileClient::Pane;			# for $THREAD_EVENT
+use apps::fileClient::Pane;			# for $THREAD_EVENT
 
 
 my $dbg_thread = 0;

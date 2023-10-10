@@ -4,7 +4,7 @@
 #-------------------------------------------
 # The workhorse window of the application
 
-package Pub::fileClient::Pane;	# continued
+package apps::fileClient::Pane;	# continued
 use strict;
 use warnings;
 use threads;
@@ -13,9 +13,9 @@ use Wx qw(:everything);
 use Pub::Utils;
 use Pub::WX::Dialogs;
 use Pub::FS::FileInfo;
-use Pub::fileClient::Dialogs;
-use Pub::fileClient::ProgressDialog;
-use Pub::fileClient::Pane;		# for $COMMAND_XXXX
+use apps::fileClient::Dialogs;
+use apps::fileClient::ProgressDialog;
+use apps::fileClient::Pane;		# for $COMMAND_XXXX
 
 
 my $dbg_ops  = 0;		# commands
@@ -317,7 +317,7 @@ sub doCommandSelected
 		CapFirst($display_command)." Confirmation");
 
 	$this->{progress} = # !$num_dirs && $num_files==1 ? '' :
-		Pub::fileClient::ProgressDialog->new(
+		apps::fileClient::ProgressDialog->new(
 			undef,
 			uc($display_command));
 

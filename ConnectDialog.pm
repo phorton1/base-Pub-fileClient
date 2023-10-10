@@ -1,5 +1,5 @@
 #-------------------------------------------------
-# Pub::fileClient::ConnectDialog.pm
+# apps::fileClient::ConnectDialog.pm
 #-------------------------------------------------
 # Any changes made to the prefs are invariantly saved.
 # The Add/Update, Delete, and MoveUp/Down changes are
@@ -15,7 +15,7 @@
 # saving them to the prefs. In fact, this window will BEGIN
 # with {edit_dirty} if it is activated from such a window.
 
-package Pub::fileClient::ConnectDialog;
+package apps::fileClient::ConnectDialog;
 use strict;
 use warnings;
 use threads;
@@ -31,8 +31,8 @@ use Wx::Event qw(
 	EVT_CHECKBOX);
 use Pub::Utils;
 use Pub::WX::Dialogs;
-use Pub::fileClient::Prefs;
-use Pub::fileClient::Resources;
+use apps::fileClient::Prefs;
+use apps::fileClient::Resources;
 use base qw(Wx::Dialog);
 
 

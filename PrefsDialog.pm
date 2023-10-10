@@ -1,10 +1,10 @@
 #-------------------------------------------------
-# Pub::fileClient::PrefsDialog.pm
+# apps::fileClient::PrefsDialog.pm
 #-------------------------------------------------
 # A dialog for editing the (few) 'global' preferences
 # that are not 'connections'.  See Prefs.cpp for details.
 
-package Pub::fileClient::PrefsDialog;
+package apps::fileClient::PrefsDialog;
 use strict;
 use warnings;
 use threads;
@@ -15,8 +15,8 @@ use Wx::Event qw(
 	EVT_UPDATE_UI_RANGE
 	EVT_IDLE);
 use Pub::Utils;
-use Pub::fileClient::Prefs;
-# use Pub::fileClient::Resources;
+use apps::fileClient::Prefs;
+# use apps::fileClient::Resources;
 use base qw(Wx::Dialog);
 
 

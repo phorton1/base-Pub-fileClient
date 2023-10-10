@@ -7,7 +7,7 @@
 # PRH - need to implement prefsDlg
 # PRH - I think buddy prefs go in fileClient.prefs (it's all one big thing?)
 
-package Pub::fileClient::AppFrame;
+package apps::fileClient::AppFrame;
 use strict;
 use warnings;
 use threads;
@@ -16,11 +16,11 @@ use Wx qw(:everything);
 use Wx::Event qw(EVT_MENU_RANGE);
 use Pub::Utils;
 use Pub::WX::Frame;
-use Pub::fileClient::Resources;
-use Pub::fileClient::Window;
-use Pub::fileClient::Prefs;
-use Pub::fileClient::PrefsDialog;
-use Pub::fileClient::ConnectDialog;
+use apps::fileClient::Resources;
+use apps::fileClient::Window;
+use apps::fileClient::Prefs;
+use apps::fileClient::PrefsDialog;
+use apps::fileClient::ConnectDialog;
 use base qw(Pub::WX::Frame);
 
 my $dbg_app = 0;
@@ -94,7 +94,7 @@ sub createPane
 	{
 		return error("No data specified in fileClient::createPane()") if !$data;
 	    $book = $this->getOpenDefaultNotebook($id) if !$book;
-        return Pub::fileClient::Window->new($this,$id,$book,$data);
+        return apps::fileClient::Window->new($this,$id,$book,$data);
     }
     return $this->SUPER::createPane($id,$book,$data,$config_str);
 }
@@ -105,8 +105,8 @@ sub onCommand
 	my ($this,$event) = @_;
 	my $id = $event->GetId();
 
-	Pub::fileClient::ConnectDialog->connect() if $id == $COMMAND_CONNECT;
-	Pub::fileClient::PrefsDialog->editPrefs() if $id == $COMMAND_PREFS;
+	apps::fileClient::ConnectDialog->connect() if $id == $COMMAND_CONNECT;
+	apps::fileClient::PrefsDialog->editPrefs() if $id == $COMMAND_PREFS;
 }
 
 
@@ -115,14 +115,14 @@ sub onCommand
 # CREATE AND RUN THE APPLICATION
 #----------------------------------------------------
 
-package Pub::fileClient::App;
+package apps::fileClient::App;
 use strict;
 use warnings;
 use threads;
 use threads::shared;
 use Pub::Utils;
 use Pub::WX::Main;
-use Pub::fileClient::Prefs;
+use apps::fileClient::Prefs;
 use base 'Wx::App';
 
 # Stuff to begin my 'standard' application
@@ -139,7 +139,7 @@ my $frame;
 
 sub OnInit
 {
-	$frame = Pub::fileClient::AppFrame->new();
+	$frame = apps::fileClient::AppFrame->new();
 	if (!$frame)
 	{
 		warning(0,0,"unable to create frame");
@@ -150,7 +150,7 @@ sub OnInit
 	return 1;
 }
 
-my $app = Pub::fileClient::App->new();
+my $app = apps::fileClient::App->new();
 Pub::WX::Main::run($app);
 
 # This little snippet is required for my standard
