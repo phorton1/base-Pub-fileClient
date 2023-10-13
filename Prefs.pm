@@ -12,7 +12,9 @@ use Pub::WX::Dialogs;
 
 
 my $dbg_prefs = 0;
-my $dbg_sem = 0;
+	# 0 = initPrefs and savePrefs calls
+	# -1 = read/write details
+my $dbg_sem = 1;
 	#  0 = show initial create/open
 	# -1 = show wait and release details
 

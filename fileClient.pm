@@ -25,34 +25,38 @@ use base qw(Pub::WX::Frame);
 
 my $dbg_app = 0;
 
+
+
+
 sub new
 {
 	my ($class, $parent) = @_;
-	my $this = $class->SUPER::new($parent);
-	return $this;
-}
-
-
-sub onInit
-    # derived classes MUST call base class!
-{
-    my ($this) = @_;
-
-    return if !$this->SUPER::onInit();
-	EVT_MENU_RANGE($this, $COMMAND_PREFS, $COMMAND_CONNECT, \&onCommand);
 
 	warning($dbg_app,-1,"FILE CLIENT STARTED WITH PID($$)");
 
-	# yet another extreme weirdness.
-	# before and after messages have color and no timestamps
-	# messages IN initPrefs() have no color and have timestamps
-	# as-if Utils.pm has not been parsed.  Must be some kind of
-	# magic in WX with eval() or mucking around with Perl itself.
-
 	return if !initPrefs();
+		# we get the prefs first cuz there are preferences
+		# related to how we want to restore the app
 
-	# same with (and especially) the call to parseCommandLine
-	# setAppFrame($this);
+	# if any command line arguments are passed,
+	# or the restore_startup pref is not set,
+	# we merely restore the main window rectangle.
+	#
+	# otherwise, the Frame base class witll restore
+	# the windows, and later we will NOT do the
+	# auto-start connections loop
+
+	my $how_restore = !@ARGV && getPref('restore_startup') ?
+		$RESTORE_ALL : $RESTORE_MAIN_RECT;
+
+	Pub::WX::Frame::setHowRestore($how_restore);
+		# apps decide how they want to restore from ini file
+
+	my $this = $class->SUPER::new($parent);
+		# Create the super class, which does the restoreState()
+
+	# start connection from cmmand line if @ARG, or
+	# any auto_start connections if not ..
 
 	if (@ARGV)
 	{
@@ -60,7 +64,7 @@ sub onInit
 		return if !$connection;
 		$this->createPane($ID_CLIENT_WINDOW,undef,$connection)
 	}
-	else
+	elsif (!getPref('restore_startup'))
 	{
 		my @start_connections;
 		return if !waitPrefs();
@@ -77,26 +81,27 @@ sub onInit
 		}
 	}
 
+	# register event handlers and we're done
+
+	EVT_MENU_RANGE($this, $COMMAND_PREFS, $COMMAND_CONNECT, \&onCommand);
     return $this;
 }
 
 
+
 sub createPane
-	# we never save/restore any windows
-	# so config_str is unused
 {
-	my ($this,$id,$book,$data,$config_str) = @_;
-	display($dbg_app+1,0,"fileClient::createPane($id)".
+	my ($this,$id,$book,$data) = @_;
+	display($dbg_app,0,"fileClient::createPane($id)".
 		" book="._def($book).
-		" data="._def($data));
+		" data="._def($data) );
 
 	if ($id == $ID_CLIENT_WINDOW)
 	{
-		return error("No data specified in fileClient::createPane()") if !$data;
-	    $book = $this->getOpenDefaultNotebook($id) if !$book;
+	    $book ||= $this->{book};
         return apps::fileClient::Window->new($this,$id,$book,$data);
     }
-    return $this->SUPER::createPane($id,$book,$data,$config_str);
+    return $this->SUPER::createPane($id,$book,$data);
 }
 
 
@@ -122,6 +127,7 @@ use threads;
 use threads::shared;
 use Pub::Utils;
 use Pub::WX::Main;
+use Pub::WX::AppConfig;
 use apps::fileClient::Prefs;
 use base 'Wx::App';
 
@@ -131,8 +137,9 @@ $debug_level = -5 if Cava::Packager::IsPackaged();
 	# set release debug level
 openSTDOUTSemaphore("buddySTDOUT") if $ARGV[0];
 setStandardDataDir("buddy");
-$prefs_filename = "$data_dir/fileClient.prefs";
 
+$prefs_filename = "$data_dir/fileClient.prefs";
+$ini_file = "$data_dir/fileClient.ini";
 
 my $frame;
 

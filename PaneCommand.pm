@@ -18,10 +18,8 @@ use apps::fileClient::ProgressDialog;
 use apps::fileClient::Pane;		# for $COMMAND_XXXX
 
 
-my $dbg_ops  = 0;		# commands
+my $dbg_ops  = 0;	# commands
 	# -1, -2 = more detail
-my $dbg_thread = -2;		# threaded commands
-my $dbg_idle = 0;
 
 
 #---------------------------------------------------------

@@ -20,8 +20,8 @@ use apps::fileClient::Prefs;
 use base qw(Wx::Dialog);
 
 
-my $dbg_dlg = 0;
-	# Show main dialog actions
+my $dbg_dlg = 1;
+	# Show dialog starting message
 
 
 my $LINE_HEIGHT     = 20;

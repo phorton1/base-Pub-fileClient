@@ -36,8 +36,8 @@ use apps::fileClient::Resources;
 use base qw(Wx::Dialog);
 
 
-my $dbg_dlg = 0;
-	# Show main dialog actions
+my $dbg_dlg = 1;
+	# 0 = show main dialog actions
 my $dbg_chg = 1;
 	# Show details about change event handling
 	# and field validation

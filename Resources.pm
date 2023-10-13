@@ -61,8 +61,8 @@ my %command_data = (%{$resources->{command_data}},
 
 	# app commands
 
-	$COMMAND_PREFS => ['Preferences', 'Edit global Preferences' ],
-	$COMMAND_CONNECT => ['Connect', 'Connect to a Host' ],
+	$COMMAND_PREFS 		=> ['Preferences', 'Edit global Preferences' ],
+	$COMMAND_CONNECT 	=> ['Connect', 'Connect to a Host' ],
 
 	# context menu commands
 
@@ -76,41 +76,11 @@ my %command_data = (%{$resources->{command_data}},
 );
 
 
-# Pane data for lookup of notebook by window_id
-
-my %pane_data = (
-	$ID_CLIENT_WINDOW	=> ['client_window',	'content'	],
-);
-
-
-# Notebook data includes an array "in order",
-# and a lookup by id for notebooks to be opened by
-# command id's
-
-my %notebook_data = (
-	content  => {
-        name => 'content',
-        row => 1,
-        pos => 1,
-        direction => '',
-        title => 'Content Notebook' },
-);
-
-
-my @notebooks = (
-    $notebook_data{content});
-
-
-my %notebook_name = (
-);
-
-
 #-------------------------------------
 # Menus
 #-------------------------------------
 
-my @main_menu = (
-    'view_menu,&View' );
+my @main_menu = ('view_menu,&View' );
 
 unshift @{$resources->{view_menu}},$ID_SEPARATOR;
 unshift @{$resources->{view_menu}},$COMMAND_PREFS;
@@ -137,17 +107,10 @@ my @win_context_menu = (
 #-----------------------------------------
 
 $resources = { %$resources,
-    app_title       => 'fileCllient',
-
-    command_data    => \%command_data,
-    notebooks       => \@notebooks,
-    notebook_data   => \%notebook_data,
-    notebook_name   => \%notebook_name,
-    pane_data       => \%pane_data,
-
-    main_menu       => \@main_menu,
-    win_context_menu   => \@win_context_menu,
-
+    app_title => 'fileCllient',
+    main_menu => \@main_menu,
+    command_data => \%command_data,
+    win_context_menu => \@win_context_menu,
 };
 
 

@@ -37,7 +37,8 @@ use base qw(Wx::Window);
 
 
 my $dbg_life = 0;		# life_cycle
-my $dbg_pop  = 0;		# populate
+	# -1 = show enable logic
+my $dbg_pop  = 1;		# populate
 	# -1 = addItem
 	# -2 = addItem idx mapping
 my $dbg_comp = 1;		# compare colors
@@ -127,9 +128,9 @@ sub new
 	#------------------
 
     $this->{parent}  	  = $parent;
-	$this->{pane_num}	  = $params->{pane_num};
-	$this->{port}	 	  = $params->{port};
-	$this->{host}		  = $params->{host};
+	$this->{pane_num}	  = $params->{pane_num} || 0;
+	$this->{port}	 	  = $params->{port} || '';
+	$this->{host}		  = $params->{host} || '';
 	$this->{enabled_ctrl} = $params->{enabled_ctrl};
 
     $this->{dir} = getEffectiveDir($params);
@@ -155,10 +156,12 @@ sub new
         wxLC_REPORT | wxLC_EDIT_LABELS);
     $ctrl->{parent} = $this;
 	$this->{list_ctrl} = $ctrl;
+	my $use_info = $params->{col_info};
 
     for my $i (0..$num_fields-1)
     {
         my ($field,$width) = ($fields[$i*2],$fields[$i*2+1]);
+		$width = $use_info->[$i] if $use_info;
         my $align = $i ? wxLIST_FORMAT_RIGHT : wxLIST_FORMAT_LEFT;
         $ctrl->InsertColumn($i,$field,$align,$width);
     }
@@ -258,10 +261,10 @@ sub setEnabled
 	$msg = $server_id if $enable;
 	$msg = $name." ".$msg;
 
-	display($dbg_life,0,sprintf("Pane$this->{pane_num} setEnabled($enable,$msg,0x%08x) enabled=$this->{enabled}",$color));
+	display($dbg_life+1,0,sprintf("Pane$this->{pane_num} setEnabled($enable,$msg,0x%08x) enabled=$this->{enabled}",$color));
 	if ($this->{enabled} != $enable)
 	{
-		display($dbg_life,0,"Pane$this->{pane_num} enable changed SERVER_ID=$this->{session}->{SERVER_ID}");
+		display($dbg_life+1,0,"Pane$this->{pane_num} enable changed SERVER_ID=$this->{session}->{SERVER_ID}");
 		$this->{enabled} = $enable;
 
 		my $ctrl = $this->{enabled_ctrl};
@@ -1002,5 +1005,25 @@ sub onItemSelected
     }
 }
 
+
+#-----------------------------------
+# support for save and restore
+#-----------------------------------
+# I would have to implement GetColumnsOrder and SetColumnsOrder
+# in wxPerl to restore those ....
+
+sub getColumnInfo
+{
+	my ($this) = @_;
+
+	my @widths;
+	my $ctrl = $this->{list_ctrl};
+	my $num = $ctrl->GetColumnCount();
+	for (my $i=0; $i<$num; $i++)
+	{
+		push @widths,$ctrl->GetColumnWidth($i);
+	}
+	return [@widths];
+}
 
 1;
