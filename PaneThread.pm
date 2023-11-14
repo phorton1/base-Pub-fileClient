@@ -262,7 +262,7 @@ sub onThreadEvent
 		my $caller = $rslt->{caller};
 		my $command = $rslt->{command};
 		display($dbg_thread,1,"Pane$this->{pane_num} onThreadEvent finiishing caller($caller) command(($command) rslt=$rslt",
-			0,$display_color_light_magenta);
+			0,$win_color_light_magenta);
 
 		# we clear the {thread} early so that Window::populate() will work
 		# in the below calls. We are running in the main thread, so everything
@@ -333,7 +333,7 @@ sub onThreadEvent
 		# really done
 
 		display($dbg_thread,1,"Pane$this->{pane_num} onThreadEvent done caller($caller) command(($command) rslt=$rslt",
-			0,$display_color_light_magenta);
+			0,$win_color_light_magenta);
 	}
 
 	# the only pure text $rslts are PROGRESS message
