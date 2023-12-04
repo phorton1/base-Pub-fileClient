@@ -27,7 +27,7 @@ use apps::fileClient::Prefs;
 use apps::fileClient::Resources;
 use apps::fileClient::PaneThread;
 use apps::fileClient::PaneCommand;
-use base qw(Wx::Window Pub::WX::Window);
+use base qw(Pub::WX::Window);
 
 
 my $dbg_fcw = 0;
@@ -158,8 +158,6 @@ sub new
 
     # Finished
 
-	# EVT_CLOSE is already registered by Pub::WX::Window
-	# EVT_CLOSE($this,\&onClose);
     EVT_SIZE($this,\&onSize);
 	return $this;
 }
