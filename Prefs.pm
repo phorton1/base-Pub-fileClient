@@ -262,6 +262,9 @@ sub argOK
 
 
 sub parseCommandLine
+	# Cannot currently invoke SSL from command line, except by
+	# using existing named connections.
+	#
 	# returns undef if could not waitPrefs()
 	# returns 0 if there's no command line, or an error was reported
 	# returns a $connection on success.
