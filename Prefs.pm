@@ -1,6 +1,7 @@
 #---------------------------------------
-# Pub::FS::Prefs.pm
+# apps::fileClient::Prefs
 #---------------------------------------
+# Note that this is entirely different than Pub::Prefs
 
 package apps::fileClient::Prefs;
 use strict;
@@ -58,19 +59,29 @@ my $PREFS_SEM;
 # In the app, they are always used from the main thread.
 
 my $prefs_dt:shared;
-my $prefs:shared = shared_clone({
+my $default_prefs = {
 	restore_startup 	=> 0,
 	default_local_dir 	=> "/",
 	default_remote_dir 	=> "/",
+	ssl_cert_file		=> '',
+	ssl_key_file		=> '',
+	ssl_ca_file			=> '',
+	debug_ssl			=> '',
 	connections		 	=> shared_clone([]),
 	connectionById 		=> shared_clone({}),
-});
+};
+
+my $prefs:shared = shared_clone($default_prefs);
 
 
 my @header_fields = qw(
 	restore_startup
     default_local_dir
-    default_remote_dir );
+    default_remote_dir
+	ssl_cert_file
+	ssl_key_file
+	ssl_ca_file
+	debug_ssl );
 
 my @connection_fields = qw(
 	connection_id
@@ -79,7 +90,8 @@ my @connection_fields = qw(
 my @param_fields = qw(
 	dir
 	port
-	host );
+	host
+	ssl );
 
 
 #----------------------------------------------------
@@ -158,7 +170,8 @@ sub getPref
 	# should only be used for unary prefs
 {
 	my ($id) = @_;
-	return $prefs->{$id};
+	return defined($prefs->{$id}) ?
+		$prefs->{$id} : '';
 }
 
 
@@ -179,7 +192,8 @@ sub defaultParams
 	my $retval = {
 		dir => '',
 		host => '',
-		port => '' };
+		port => '',
+		ssl  => '' };
 	return $retval;
 }
 
@@ -338,9 +352,7 @@ sub initPrefs()
 	my $text = getTextFile($prefs_filename);
 	if ($text)
 	{
-		$prefs = shared_clone({
-			connections => shared_clone([]),
-			connectionById => shared_clone({}) });
+		$prefs = shared_clone($default_prefs);
 
 		my $connection;
 		my $param_num = 0;

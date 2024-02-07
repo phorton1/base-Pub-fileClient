@@ -131,6 +131,7 @@ sub new
 	$this->{pane_num}	  = $params->{pane_num} || 0;
 	$this->{port}	 	  = $params->{port} || '';
 	$this->{host}		  = $params->{host} || '';
+	$this->{ssl}		  = $params->{ssl} || '';
 	$this->{enabled_ctrl} = $params->{enabled_ctrl};
 
     $this->{dir} = getEffectiveDir($params);
@@ -173,10 +174,23 @@ sub new
 	if ($this->{port})
 	{
 		# ctor tries to connect and returns !SOCK
+		# if there's a problem
 
-		$this->{session} = Pub::FS::ClientSession->new({
+		my $session_params = {
 			PORT => $params->{port},
-			HOST => $params->{host} });
+			HOST => $params->{host},
+		};
+
+		if ($params->{ssl})
+		{
+			$session_params->{SSL} = 1;
+			$session_params->{SSL_CERT_FILE} = getPref('ssl_cert_file');
+			$session_params->{SSL_KEY_FILE}  = getPref('ssl_key_file');
+			$session_params->{SSL_CA_FILE}   = getPref('ssl_ca_file');
+			$session_params->{DEBUG_SSL} 	 = getPref('debug_ssl');
+		}
+
+		$this->{session} = Pub::FS::ClientSession->new($session_params);
 		$this->{connected} = $this->{session}->isConnected();
 		$this->{has_socket} = $this->{connected};
 		$this->{enabled} = -1;	 # to force setEnabled to show the message
@@ -244,6 +258,7 @@ sub getThisConnectionName
 		$this->{port} ?
 			"port($this->{port})" :
 		"local";
+	$name = "SSL ".$name if $this->{ssl};
 	return $name;
 }
 

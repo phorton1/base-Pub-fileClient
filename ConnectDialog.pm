@@ -14,6 +14,15 @@
 # connection specified by the edit fields, without necessary
 # saving them to the prefs. In fact, this window will BEGIN
 # with {edit_dirty} if it is activated from such a window.
+#
+# 2024-02-07 - added rudimentary support for SSL.
+# 	At this time there is only one set of certificates
+#   for the entire client.  Later may want to make certs
+#   per groups of connections.
+#
+#   For SSL, the correct port (typically 5873) must be
+#   manually entered for the connection.
+
 
 package apps::fileClient::ConnectDialog;
 use strict;
@@ -43,18 +52,27 @@ my $dbg_chg = 1;
 	# and field validation
 
 
+
+my $DIALOG_WIDTH 	= 500;
+my $DIALOG_HEIGHT   = 520;
+
+
 my $LINE_HEIGHT     = 20;
 
-my $LEFT_COLUMN 			= 20;
-my $INDENT_COLUMN 			= 40;
-my $NAME_COLUMN 			= 110;
-my $RIGHT_COLUMN  			= 300;
-my $NAME_WIDTH 				= 160;
-my $SESSION_NAME_WIDTH    	= 120;
-my $SESSION_RIGHT_COLUMN  	= 260;
+my $DLG_LEFT_COL 			= 20;
+my $DLG_INDENT_COL 			= 40;
+my $DLG_FIELD_COL 			= 110;
+my $DLG_SSL_LABEL_COL		= 180;
+my $DLG_SSL_COL				= 210;
+my $DLG_RIGHT_COL  			= 400;
 
-my $LIST_WIDTH	= 270;
-my $LIST_HEIGHT = 7 * $LINE_HEIGHT;
+my $SESSION_NAME_WIDTH 		= 160;
+my $START_DIR_WIDTH    		= 200;
+my $HOST_WIDTH				= 200;
+
+my $LIST_WIDTH				= 370;
+my $LIST_HEIGHT 			= 7 * $LINE_HEIGHT;
+
 
 my ($ID_CONNECT_CONNECTION,
 	$ID_UPDATE_CONNECTION,
@@ -69,15 +87,17 @@ my ($ID_CONNECT_CONNECTION,
 	$ID_CTRL_DIR0,
 	$ID_CTRL_PORT0,
 	$ID_CTRL_HOST0,
+	$ID_SSL0,
 	$ID_CTRL_DIR1,
 	$ID_CTRL_PORT1,
-	$ID_CTRL_HOST1, ) = (1000..2000);
+	$ID_CTRL_HOST1,
+	$ID_SSL1, ) = (1000..2000);
 
 
 my @list_fields = (
     connection  => 90,
-    session1 => 90,
-    session2 => 90 );
+    session1 	=> 135,
+    session2 	=> 135 );
 
 
 
@@ -99,7 +119,7 @@ sub connect()
 		-1,
 		"Connect",
         [-1,-1],
-        [400,520],
+        [$DIALOG_WIDTH,$DIALOG_HEIGHT],
         wxDEFAULT_DIALOG_STYLE );
 
 	# Create the controls
@@ -437,9 +457,11 @@ sub toControls
     $this->{sdir0}	   ->ChangeValue($params0->{dir});
     $this->{port0}	   ->ChangeValue($params0->{port} || '');
     $this->{host0}	   ->ChangeValue($params0->{host});
+    $this->{ssl0}	   ->SetValue($params0->{ssl} || '');
     $this->{sdir1}	   ->ChangeValue($params1->{dir});
     $this->{port1}	   ->ChangeValue($params1->{port} || '');
     $this->{host1}	   ->ChangeValue($params1->{host});
+    $this->{ssl1}	   ->SetValue($params1->{ssl} || '');
 }
 
 
@@ -456,9 +478,11 @@ sub fromControls
     $params0->{dir}				 = $this->{sdir0}	  ->GetValue();
     $params0->{port}			 = $this->{port0}	  ->GetValue() || '';
     $params0->{host}			 = $this->{host0}	  ->GetValue();
+	$params0->{ssl}			 	 = $this->{ssl0}	  ->GetValue() || '';
     $params1->{dir}				 = $this->{sdir1}	  ->GetValue();
     $params1->{port}			 = $this->{port1}	  ->GetValue() || '';
     $params1->{host}			 = $this->{host1}	  ->GetValue();
+	$params1->{ssl}			 	 = $this->{ssl1}	  ->GetValue() || '';
 }
 
 
@@ -472,8 +496,10 @@ sub getParamDesc
 			($params->{port}?":$params->{port}":'') :
 		$params->{port} ? "port($params->{port})" :
 		"local";
+	$name = "SSL ".$name if $params->{ssl};
 	return $name;
 }
+
 
 sub populateListCtrl
 	# Called when prefs change
@@ -508,63 +534,67 @@ sub createControls
 	# Connection
 
 	my $y = 20;
-	my $ctrl = Wx::StaticText->new($this,-1,'Connection',[$LEFT_COLUMN,$y]);
+	my $ctrl = Wx::StaticText->new($this,-1,'Connection',[$DLG_LEFT_COL,$y]);
 	$ctrl->SetFont($title_font);
-    $this->{cid} =  Wx::TextCtrl->new($this,$ID_CTRL_CID,'',[$NAME_COLUMN, $y],[$NAME_WIDTH,20]);
-    $ctrl = Wx::Button->new($this,$ID_CONNECT_CONNECTION,'Connect',[$RIGHT_COLUMN,$y],[70,20]);
+    $this->{cid} =  Wx::TextCtrl->new($this,$ID_CTRL_CID,'',[$DLG_FIELD_COL, $y],[$SESSION_NAME_WIDTH,20]);
+    $ctrl = Wx::Button->new($this,$ID_CONNECT_CONNECTION,'Connect',[$DLG_RIGHT_COL,$y],[70,20]);
 	$ctrl->SetDefault();
 	$y += $LINE_HEIGHT;
 
-	$ctrl = Wx::StaticText->new($this,-1,'AutoStart',[$INDENT_COLUMN,$y]);
-    $this->{auto_start} = Wx::CheckBox->new($this,$ID_CTRL_AUTO_START,'',[$NAME_COLUMN,$y+2],[-1,-1]);
-	$this->{upd_button} = Wx::Button->new($this,$ID_UPDATE_CONNECTION,'Add',[$RIGHT_COLUMN,$y],[70,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'AutoStart',[$DLG_INDENT_COL,$y]);
+    $this->{auto_start} = Wx::CheckBox->new($this,$ID_CTRL_AUTO_START,'',[$DLG_FIELD_COL,$y+2],[-1,-1]);
+	$this->{upd_button} = Wx::Button->new($this,$ID_UPDATE_CONNECTION,'Add',[$DLG_RIGHT_COL,$y],[70,20]);
 	$y += 2 * $LINE_HEIGHT;
 
 	# Session1
 
-	$ctrl = Wx::StaticText->new($this,-1,'Session1',[$LEFT_COLUMN,$y]);
+	$ctrl = Wx::StaticText->new($this,-1,'Session1',[$DLG_LEFT_COL,$y]);
 	$ctrl->SetFont($title_font);
 	$y += $LINE_HEIGHT;
 
-	$ctrl = Wx::StaticText->new($this,-1,'Start Dir',[$INDENT_COLUMN,$y]);
-    $this->{sdir0} =  Wx::TextCtrl->new($this,$ID_CTRL_DIR0,'',[$NAME_COLUMN, $y],[$SESSION_NAME_WIDTH,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'Start Dir',[$DLG_INDENT_COL,$y]);
+    $this->{sdir0} =  Wx::TextCtrl->new($this,$ID_CTRL_DIR0,'',[$DLG_FIELD_COL, $y],[$START_DIR_WIDTH,20]);
 	$y += $LINE_HEIGHT;
 
-	$ctrl = Wx::StaticText->new($this,-1,'Port',[$INDENT_COLUMN,$y]);
-    $this->{port0} =  Wx::TextCtrl->new($this,$ID_CTRL_PORT0,'',[$NAME_COLUMN, $y],[80,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'Port',[$DLG_INDENT_COL,$y]);
+    $this->{port0} =  Wx::TextCtrl->new($this,$ID_CTRL_PORT0,'',[$DLG_FIELD_COL, $y],[60,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'SSL',[$DLG_SSL_LABEL_COL,$y+2]);
+    $this->{ssl0} = Wx::CheckBox->new($this,$ID_SSL0,'',[$DLG_SSL_COL,$y+2],[-1,-1]);
 	$y += $LINE_HEIGHT;
 
-	$ctrl = Wx::StaticText->new($this,-1,'Host',[$INDENT_COLUMN,$y]);
-    $this->{host0} =  Wx::TextCtrl->new($this,$ID_CTRL_HOST0,'',[$NAME_COLUMN, $y],[$SESSION_NAME_WIDTH,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'Host',[$DLG_INDENT_COL,$y]);
+    $this->{host0} =  Wx::TextCtrl->new($this,$ID_CTRL_HOST0,'',[$DLG_FIELD_COL, $y],[$HOST_WIDTH,20]);
 	$y += 2 * $LINE_HEIGHT;
 
 
 	# Session2
 
-	$ctrl = Wx::StaticText->new($this,-1,'Session2',[$LEFT_COLUMN,$y]);
+	$ctrl = Wx::StaticText->new($this,-1,'Session2',[$DLG_LEFT_COL,$y]);
 	$ctrl->SetFont($title_font);
 	$y += $LINE_HEIGHT;
 
-	$ctrl = Wx::StaticText->new($this,-1,'Start Dir',[$INDENT_COLUMN,$y]);
-    $this->{sdir1} =  Wx::TextCtrl->new($this,$ID_CTRL_DIR1,'',[$NAME_COLUMN, $y],[$SESSION_NAME_WIDTH,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'Start Dir',[$DLG_INDENT_COL,$y]);
+    $this->{sdir1} =  Wx::TextCtrl->new($this,$ID_CTRL_DIR1,'',[$DLG_FIELD_COL, $y],[$START_DIR_WIDTH,20]);
 	$y += $LINE_HEIGHT;
 
-	$ctrl = Wx::StaticText->new($this,-1,'Port',[$INDENT_COLUMN,$y]);
-    $this->{port1} =  Wx::TextCtrl->new($this,$ID_CTRL_PORT1,'',[$NAME_COLUMN, $y],[80,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'Port',[$DLG_INDENT_COL,$y]);
+    $this->{port1} =  Wx::TextCtrl->new($this,$ID_CTRL_PORT1,'',[$DLG_FIELD_COL, $y],[60,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'SSL',[$DLG_SSL_LABEL_COL,$y+2]);
+    $this->{ssl1} = Wx::CheckBox->new($this,$ID_SSL1,'',[$DLG_SSL_COL,$y+2],[-1,-1]);
 	$y += $LINE_HEIGHT;
 
-	$ctrl = Wx::StaticText->new($this,-1,'Host',[$INDENT_COLUMN,$y]);
-    $this->{host1} =  Wx::TextCtrl->new($this,$ID_CTRL_HOST1,'',[$NAME_COLUMN, $y],[$SESSION_NAME_WIDTH,20]);
+	$ctrl = Wx::StaticText->new($this,-1,'Host',[$DLG_INDENT_COL,$y]);
+    $this->{host1} =  Wx::TextCtrl->new($this,$ID_CTRL_HOST1,'',[$DLG_FIELD_COL, $y],[$HOST_WIDTH,20]);
 	$y += 2 * $LINE_HEIGHT;
 
 	# List Control
 
-	$ctrl = Wx::StaticText->new($this,-1,'Pre-defined Connections',[$LEFT_COLUMN,$y]);
+	$ctrl = Wx::StaticText->new($this,-1,'Pre-defined Connections',[$DLG_LEFT_COL,$y]);
 	$ctrl->SetFont($title_font);
 	$y += $LINE_HEIGHT;
 
     $ctrl = Wx::ListCtrl->new(
-        $this,-1,[$LEFT_COLUMN,$y],[$LIST_WIDTH,$LIST_HEIGHT],
+        $this,-1,[$DLG_LEFT_COL,$y],[$LIST_WIDTH,$LIST_HEIGHT],
         wxLC_REPORT | wxLC_SINGLE_SEL ); #  | wxLC_EDIT_LABELS);
     $ctrl->{parent} = $this;
 	$this->{list_ctrl} = $ctrl;
@@ -577,22 +607,22 @@ sub createControls
 
 	# List Control Buttons
 
-	$ctrl = Wx::Button->new($this,$ID_CONNECT_SELECTED,'Connect',[$RIGHT_COLUMN,$y],[70,20]);
+	$ctrl = Wx::Button->new($this,$ID_CONNECT_SELECTED,'Connect',[$DLG_RIGHT_COL,$y],[70,20]);
 	$y += 2*$LINE_HEIGHT;
 
-	$ctrl = Wx::Button->new($this,$ID_MOVE_UP,'^',[$RIGHT_COLUMN,$y],[70,20]);
+	$ctrl = Wx::Button->new($this,$ID_MOVE_UP,'^',[$DLG_RIGHT_COL,$y],[70,20]);
 	$y += $LINE_HEIGHT;
-	$ctrl = Wx::Button->new($this,$ID_LOAD_SELECTED,'Load',[$RIGHT_COLUMN,$y],[70,20]);
+	$ctrl = Wx::Button->new($this,$ID_LOAD_SELECTED,'Load',[$DLG_RIGHT_COL,$y],[70,20]);
 	$y += $LINE_HEIGHT;
-	$ctrl = Wx::Button->new($this,$ID_DELETE_SELECTED,'Delete',[$RIGHT_COLUMN,$y],[70,20]);
+	$ctrl = Wx::Button->new($this,$ID_DELETE_SELECTED,'Delete',[$DLG_RIGHT_COL,$y],[70,20]);
 	$y += $LINE_HEIGHT;
-	$ctrl = Wx::Button->new($this,$ID_MOVE_DOWN,'v',[$RIGHT_COLUMN,$y],[70,20]);
+	$ctrl = Wx::Button->new($this,$ID_MOVE_DOWN,'v',[$DLG_RIGHT_COL,$y],[70,20]);
 	$y += $LINE_HEIGHT;
 
 	# Cancel Button
 
 	$y += 1.75*$LINE_HEIGHT;
-	$ctrl = Wx::Button->new($this,wxID_CANCEL,'Close',[$RIGHT_COLUMN,$y],[70,20]);
+	$ctrl = Wx::Button->new($this,wxID_CANCEL,'Close',[$DLG_RIGHT_COL,$y],[70,20]);
 }
 
 
@@ -635,9 +665,12 @@ sub checkEditDirty
 					[ qw(0 dir 	    sdir0) ],
 					[ qw(0 port 	port0) ],
 					[ qw(0 host 	host0) ],
+					[ qw(0 ssl 		ssl0) ],
 					[ qw(1 dir 	    sdir1) ],
 					[ qw(1 port 	port1) ],
-					[ qw(1 host 	host1) ] );
+					[ qw(1 host 	host1) ],
+					[ qw(1 ssl 		ssl1) ],
+				);
 				for my $trip (@triplets)
 				{
 					my $val1 = $connection->{params}->[$trip->[0]]->{$trip->[1]} || '';

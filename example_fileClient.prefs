@@ -1,0 +1,85 @@
+restore_startup = 
+default_local_dir = /junk/data
+default_remote_dir = /
+ssl_cert_file = /dat/Private/ssl/esp32/myIOT.crt
+ssl_key_file = /dat/Private/ssl/esp32/myIOT.key
+ssl_ca_file = /dat/Private/ssl/esp32/_myESP32_CA.crt
+debug_ssl = 0
+connection
+    connection_id = Local-SSL
+    auto_start = 
+    params
+        dir = 
+        port = 
+        host = 
+        ssl = 
+    params
+        dir = /junk/data
+        port = 5873
+        host = 
+        ssl = 1
+connection
+    connection_id = rpi4B-2A
+    auto_start = 
+    params
+        dir = /base/Pub
+        port = 
+        host = 
+        ssl = 
+    params
+        dir = /base/Pub
+        port = 5872
+        host = 10.237.50.152
+        ssl = 
+connection
+    connection_id = Local-Local
+    auto_start = 
+    params
+        dir = 
+        port = 
+        host = 
+        ssl = 
+    params
+        dir = 
+        port = 
+        host = 
+        ssl = 
+connection
+    connection_id = Local-Server
+    auto_start = 
+    params
+        dir = 
+        port = 
+        host = 
+        ssl = 
+    params
+        dir = /junk/data
+        port = 5872
+        host = 
+        ssl = 
+connection
+    connection_id = Server-Server
+    auto_start = 
+    params
+        dir = /junk/data
+        port = 5872
+        host = 
+        ssl = 
+    params
+        dir = /junk/data
+        port = 5872
+        host = 10.237.50.101
+        ssl = 
+connection
+    connection_id = Local-TE
+    auto_start = 
+    params
+        dir = 
+        port = 
+        host = 
+        ssl = 
+    params
+        dir = 
+        port = 62377
+        host = 
+        ssl = 
