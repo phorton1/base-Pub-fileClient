@@ -1,4 +1,91 @@
 #!/usr/bin/perl
+
+
+package getParamDialog;
+use strict;
+use warnings;
+use Wx qw(:everything);
+use Wx::Event qw(EVT_BUTTON);
+use Pub::Utils;
+use apps::fileClient::Resources;
+use base qw(Wx::Dialog);
+
+
+sub new
+{
+    my ($class,
+		$parent,
+		$command_id,						# 0=chmod, 1=chown
+		$files_and_dirs,
+		$default) = @_;
+
+	my $what = $command_id == $COMMAND_CHOWN ? 'User:Group' : 'Mode';
+	my $title = "Set $what(s)";
+
+	my $this = $class->SUPER::new(
+        $parent,-1,$title,
+        [-1,-1],
+        [300,160],
+        wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+	$this->{command_id} = $command_id;
+
+	Wx::StaticText->new($this,-1,
+		"Enter the $what to apply to\n$files_and_dirs",
+		[10,10]);
+	Wx::StaticText->new($this,-1,$what,[10,72]);
+	$this->{control} = Wx::TextCtrl->new($this,-1,$default,[90,70],[100,20]);
+
+    Wx::Button->new($this,wxID_OK,'OK',[210,10],[60,20]);
+    Wx::Button->new($this,wxID_CANCEL,'Cancel',[210,50],[60,20]);
+    EVT_BUTTON($this,-1,\&onButton);
+    return $this;
+}
+
+
+sub getResult
+{
+    my ($this) = @_;
+    my $rslt = $this->{control}->GetValue();
+    $rslt =~ s/\s*//;
+    return $rslt;
+}
+
+
+sub onButton
+{
+    my ($this,$event) = @_;
+    my $id = $event->GetId();
+
+	if ($id == wxID_OK)
+    {
+        my $val = $this->{control}->GetValue();;
+        $val =~ s/\s*//;
+        return if !$val;
+
+		if ($this->{command_id} == $COMMAND_CHOWN)
+		{
+			if ($val !~ /^\w+:\w+$/)
+			{
+				error("Bad format for user:group: $val");
+				return;
+			}
+		}
+		else
+		{
+			if ($val !~ /^\d\d\d$/)
+			{
+				error("Bad mode format: $val");
+				return;
+			}
+		}
+    }
+
+    $event->Skip();
+    $this->EndModal($id);
+}
+
+
+
 #-------------------------------------------------
 # mkdirDialog
 #-------------------------------------------------

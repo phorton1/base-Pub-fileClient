@@ -23,6 +23,8 @@ BEGIN
 		$COMMAND_CONNECT
 		$ID_CLIENT_WINDOW
 
+		$COMMAND_CHOWN
+		$COMMAND_CHMOD
         $COMMAND_XFER
         $COMMAND_DELETE
         $COMMAND_RENAME
@@ -45,6 +47,8 @@ our (
 
 	$ID_CLIENT_WINDOW,
 
+	$COMMAND_CHOWN,
+	$COMMAND_CHMOD,
     $COMMAND_XFER,
     $COMMAND_DELETE,
     $COMMAND_RENAME,
@@ -66,6 +70,8 @@ my %command_data = (%{$resources->{command_data}},
 
 	# context menu commands
 
+	$COMMAND_CHOWN		=> ['Owner',	'chown on files and directories' ],
+	$COMMAND_CHMOD		=> ['Mode',		'chmod on files and directories' ],
     $COMMAND_XFER       => ['Transfer', 'Upload/Download file/directories'],
     $COMMAND_DELETE     => ['Delete',   'Delete files/directories'],
     $COMMAND_RENAME     => ['Rename',   'Rename files/directories'],
@@ -101,6 +107,22 @@ my @win_context_menu = (
     $COMMAND_DISCONNECT,
 );
 
+my @unix_context_menu = (
+    $COMMAND_XFER,
+       $ID_SEPARATOR,
+    $COMMAND_DELETE,
+    $COMMAND_RENAME,
+	$COMMAND_CHMOD,
+	$COMMAND_CHOWN,
+       $ID_SEPARATOR,
+    $COMMAND_REFRESH,
+       $ID_SEPARATOR,
+    $COMMAND_MKDIR,
+       $ID_SEPARATOR,
+    $COMMAND_RECONNECT,
+    $COMMAND_DISCONNECT,
+);
+
 
 #-----------------------------------------
 # Merge and reset the single public object
@@ -111,6 +133,7 @@ $resources = { %$resources,
     main_menu => \@main_menu,
     command_data => \%command_data,
     win_context_menu => \@win_context_menu,
+    unix_context_menu => \@unix_context_menu,
 };
 
 

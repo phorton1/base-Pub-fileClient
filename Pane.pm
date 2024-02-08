@@ -1,11 +1,13 @@
 #!/usr/bin/perl
 #-------------------------------------------
-# FC::Pane
+# apps::fileClient::Pane
 #-------------------------------------------
 # The workhorse window of the application.
 #
 # For a discussion if threads in wxPerl, see:
 # https://metacpan.org/dist/Wx/view/lib/Wx/Thread.pod
+#
+# TODO: need to display additional columns for unix
 
 package apps::fileClient::Pane;
 use strict;
@@ -215,8 +217,8 @@ sub new
 	EVT_IDLE($this,\&onIdle);
 	EVT_CONTEXT_MENU($ctrl,\&onContextMenu);
     EVT_MENU($this,$COMMAND_REPOPULATE,\&onRepopulate);
-    EVT_MENU_RANGE($this, $COMMAND_XFER, $COMMAND_DISCONNECT, \&onCommand);
-	EVT_UPDATE_UI_RANGE($this, $COMMAND_XFER, $COMMAND_DISCONNECT, \&onCommandUI);
+    EVT_MENU_RANGE($this, $COMMAND_CHOWN, $COMMAND_DISCONNECT, \&onCommand);
+	EVT_UPDATE_UI_RANGE($this, $COMMAND_CHOWN, $COMMAND_DISCONNECT, \&onCommandUI);
     EVT_LIST_KEY_DOWN($ctrl,-1,\&onKeyDown);
     EVT_LIST_COL_CLICK($ctrl,-1,\&onClickColHeader);
     EVT_LIST_ITEM_SELECTED($ctrl,-1,\&onItemSelected);
@@ -414,7 +416,9 @@ sub onContextMenu
     my $this = $ctrl->{parent};
 	return if $this->{thread};
     display($dbg_sel,0,"Pane$this->{pane_num} onContextMenu()");
-    my $menu = Pub::WX::Menu::createMenu('win_context_menu');
+    my $menu = Pub::WX::Menu::createMenu($this->{unix} ?
+		'unix_context_menu' :
+		'win_context_menu');
 	$this->PopupMenu($menu,[-1,-1]);
 }
 
@@ -459,9 +463,11 @@ sub onCommandUI
         $enabled &&= $ctrl->GetSelectedItemCount()==1;
     }
 
-	# delete requires some selected items
+	# delete, chown, and chmod requires some selected items
 
-    elsif ($id == $COMMAND_DELETE)
+    elsif ($id == $COMMAND_DELETE ||
+		   $id == $COMMAND_CHMOD ||
+		   $id == $COMMAND_CHOWN )
     {
         $enabled &&= $ctrl->GetSelectedItemCount();
     }

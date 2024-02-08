@@ -244,10 +244,20 @@ sub doCommandSelected
     my $num_dirs = 0;
     my $ctrl = $this->{list_ctrl};
     my $num = $ctrl->GetItemCount();
-	my $is_put = $id == $COMMAND_XFER ? 1 : 0;
 
-	my $display_command = $is_put ? 'xfer' : 'delete';
-    display($dbg_ops,1,"Pane$this->{pane_num} doCommandSelected($display_command) ".$ctrl->GetSelectedItemCount()."/$num selected items");
+	my $is_put = $id == $COMMAND_XFER ? 1 : 0;
+	my $is_delete = $id == $COMMAND_DELETE ? 1 : 0;
+
+	# my $display_command = $is_put ? 'xfer' : 'delete';
+
+	my $display_command =
+		$id == $COMMAND_XFER ? 'xfer' :
+		$id == $COMMAND_DELETE ? 'delete' :
+		$id == $COMMAND_CHMOD ? 'chmod' :
+		$id == $COMMAND_CHOWN ? 'chown' :
+		return error("unknown command id: $id");
+
+	display($dbg_ops,1,"Pane$this->{pane_num} doCommandSelected($display_command) ".$ctrl->GetSelectedItemCount()."/$num selected items");
 
     # build an info for the root entry (since the
 	# one on the list has ...UP... or ...ROOT...),
@@ -288,6 +298,13 @@ sub doCommandSelected
 
     # build a message saying what will be affected
 
+	my $MODE_DIR = '750';
+	my $MODE_EXE = '750';
+	my $MODE_FILE = '640';
+	my $EXE_RE = '\.(pm|pl|cgi)$';	# |^.*\/(prh_deny|prh_daily|prh_monitor|fileServer)$';
+
+	my $def_mode = $MODE_DIR;
+
     my $file_and_dirs = '';
     if ($num_files == 0 && $num_dirs == 1)
     {
@@ -296,6 +313,7 @@ sub doCommandSelected
     elsif ($num_dirs == 0 && $num_files == 1)
     {
         $file_and_dirs = "the file '$first_entry'";
+		$def_mode = $first_entry =~ /$EXE_RE/ ? $MODE_EXE : $MODE_FILE;
     }
     elsif ($num_files == 0)
     {
@@ -303,6 +321,7 @@ sub doCommandSelected
     }
     elsif ($num_dirs == 0)
     {
+		$def_mode = $MODE_FILE;
         $file_and_dirs = "$num_files files";
     }
     else
@@ -310,26 +329,57 @@ sub doCommandSelected
         $file_and_dirs = "$num_dirs directories and $num_files files";
     }
 
-	return if !yesNoDialog($this,
-		"Are you sure you want to $display_command $file_and_dirs ??",
-		CapFirst($display_command)." Confirmation");
+	my $extra_param = '';
+	if ($id == $COMMAND_CHMOD ||
+		$id == $COMMAND_CHOWN )
+	{
+		# on unix, should be able to get the owner:group of the directory
+		# to serve as the default.
+
+		my $default = $id == $COMMAND_CHOWN ? 'root:root' : $def_mode;
+		my $dlg = getParamDialog->new($this,$id,$file_and_dirs,$default);
+		my $dlg_rslt = $dlg->ShowModal();
+		return if $dlg_rslt != wxID_OK;
+		$extra_param = $dlg->getResult();
+	}
+	else
+	{
+		return if !yesNoDialog($this,
+			"Are you sure you want to $display_command $file_and_dirs ??",
+			CapFirst($display_command)." Confirmation");
+	}
 
 	$this->{progress} = # !$num_dirs && $num_files==1 ? '' :
 		apps::fileClient::ProgressDialog->new(
 			undef,
 			uc($display_command));
 
-	my $command = $is_put ? $PROTOCOL_PUT : $PROTOCOL_DELETE;
+	my $command =
+		$id == $COMMAND_XFER ? $PROTOCOL_PUT :
+		$id == $COMMAND_DELETE ? $PROTOCOL_DELETE :
+		$id == $COMMAND_CHMOD ? $PROTOCOL_CHMOD :
+		$id == $COMMAND_CHOWN ? $PROTOCOL_CHOWN :
+		return error("should never get here with bad id($id)");
+
 	my $cmd_entries = !$num_dirs && $num_files == 1 ?
 		$first_entry :
 		$dir_info->{entries};
+
+	my $param2 =
+		$id == $COMMAND_XFER ? $other->{dir} :
+		$id == $COMMAND_DELETE ?  $cmd_entries :
+		$id == $COMMAND_CHMOD ? $extra_param :
+		$id == $COMMAND_CHOWN ? $extra_param : '';
+
+	my $param3 =
+		$id == $COMMAND_DELETE ? '' : $cmd_entries;
 
 	my $rslt = $this->doCommand(
 		'doCommandSelected',
 		$command,
 		$this->{dir},
-		$is_put ? $other->{dir} : $cmd_entries,
-		$is_put ? $cmd_entries : '' );
+		$param2,
+		$param3);
 
 	# doCommandThreaded is used for all non-local Sessions and PUTS
 	# It invariantly sets this->{thread} and returns -2 indicating that
@@ -356,7 +406,7 @@ sub doCommandSelected
 	#   generally be the case for a local Session, but
 	#   will be '' for a ThreadedSession
 
-	if ($id == $COMMAND_DELETE)
+	if (!$is_put)	# $id == $COMMAND_DELETE)
 	{
 		$this->setContents($rslt);
 		$this->{parent}->populate();
