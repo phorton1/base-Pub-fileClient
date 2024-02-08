@@ -191,6 +191,7 @@ sub new
 		}
 
 		$this->{session} = Pub::FS::ClientSession->new($session_params);
+		$this->{unix} = $this->{session}->{unix};
 		$this->{connected} = $this->{session}->isConnected();
 		$this->{has_socket} = $this->{connected};
 		$this->{enabled} = -1;	 # to force setEnabled to show the message
@@ -259,6 +260,7 @@ sub getThisConnectionName
 			"port($this->{port})" :
 		"local";
 	$name = "SSL ".$name if $this->{ssl};
+	$name = "unix ".$name if $this->{unix};
 	return $name;
 }
 
