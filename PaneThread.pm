@@ -31,7 +31,7 @@ my $dbg_thread = 0;
 	# -2 = onThreadEvent details
 my $dbg_idle = 0;
 
-my $USE_FORKING = 1;
+my $USE_FORKING = 0;
 	# There is still a problem with threads getting leaks,
 	# so for now we are using FORKING.
 	# Note the line I commented line out Win32::Console.pm
