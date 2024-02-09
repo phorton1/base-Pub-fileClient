@@ -6,8 +6,7 @@
 #
 # For a discussion if threads in wxPerl, see:
 # https://metacpan.org/dist/Wx/view/lib/Wx/Thread.pod
-#
-# TODO: need to display additional columns for unix
+
 
 package apps::fileClient::Pane;
 use strict;
@@ -86,9 +85,15 @@ my @fields = (
     ext         => 50,
     compare     => 50,
     size        => 60,
-    ts   		=> 140 );
-my $num_fields = 5;
-my $field_num_size = 3;
+    ts   		=> 140,
+	mode		=> 50,
+	owner		=> 40,
+	group		=> 40,
+);
+
+my $num_win_fields = 5;
+my $num_unix_fields = 8;
+
 
 
 my $title_font = Wx::Font->new(9,wxFONTFAMILY_DEFAULT,wxFONTSTYLE_NORMAL,wxFONTWEIGHT_BOLD);
@@ -147,28 +152,6 @@ sub new
 	$this->{last_sortcol} = -1;
 	$this->{last_desc} = -1;
 
-	# create the {dir_ctrl{}
-
-    $this->{dir_ctrl} = Wx::StaticText->new($this,-1,'',[10,0]);
-    $this->{dir_ctrl}->SetFont($title_font);
-
-    # set up the {list_control}
-
-    my $ctrl = Wx::ListCtrl->new(
-        $this,-1,[0,$PANE_TOP],[-1,-1],
-        wxLC_REPORT | wxLC_EDIT_LABELS);
-    $ctrl->{parent} = $this;
-	$this->{list_ctrl} = $ctrl;
-	my $use_info = $params->{col_info};
-
-    for my $i (0..$num_fields-1)
-    {
-        my ($field,$width) = ($fields[$i*2],$fields[$i*2+1]);
-		$width = $use_info->[$i] if $use_info;
-        my $align = $i ? wxLIST_FORMAT_RIGHT : wxLIST_FORMAT_LEFT;
-        $ctrl->InsertColumn($i,$field,$align,$width);
-    }
-
 	#---------------------------
 	# Create the {session}
 	#---------------------------
@@ -208,6 +191,34 @@ sub new
 	}
 
 	$this->{session}->{NAME} .= "(pane$this->{pane_num})";
+	$this->{num_cols} =
+		$this->{port} && ($this->{unix} || !$this->{connected}) ?
+			$num_unix_fields : $num_win_fields;
+
+
+	#---------------------------
+	# create the {dir_ctrl{}
+	#---------------------------
+
+    $this->{dir_ctrl} = Wx::StaticText->new($this,-1,'',[10,0]);
+    $this->{dir_ctrl}->SetFont($title_font);
+
+    # set up the {list_control}
+
+    my $ctrl = Wx::ListCtrl->new(
+        $this,-1,[0,$PANE_TOP],[-1,-1],
+        wxLC_REPORT | wxLC_EDIT_LABELS);
+    $ctrl->{parent} = $this;
+	$this->{list_ctrl} = $ctrl;
+	my $use_info = $params->{col_info};
+
+    for my $i (0..$this->{num_cols}-1)
+    {
+        my ($field,$width) = ($fields[$i*2],$fields[$i*2+1]);
+		$width = $use_info->[$i] if $use_info;
+        my $align = $i ? wxLIST_FORMAT_RIGHT : wxLIST_FORMAT_LEFT;
+        $ctrl->InsertColumn($i,$field,$align,$width);
+    }
 
 	#------------------
     # Event Handlers
@@ -574,7 +585,7 @@ sub comp	# for sort, not for conmpare
         display($dbg_sort+1,1,"comp_dir($info_a->{entry},$info_b->{entry}) returning 1");
     }
 
-    elsif ($info_a->{is_dir} && $sort_col>0 && $sort_col<$num_fields)
+    elsif ($info_a->{is_dir} && $sort_col>0 && $sort_col<$this->{num_cols})
     {
 		# we sort directories ascending except on the entry field
 		$retval = (lc($info_a->{entry}) cmp lc($info_b->{entry}));
@@ -590,7 +601,7 @@ sub comp	# for sort, not for conmpare
         my $val_1 = $desc ? $val_b : $val_a;
         my $val_2 = $desc ? $val_a : $val_b;
 
-        if ($sort_col == $field_num_size)     # size uses numeric compare
+        if ($field eq 'size')     # size uses numeric compare
         {
             $retval = ($val_1 <=> $val_2);
         }
@@ -740,6 +751,12 @@ sub setListRow
 			# and passed back in sort
 		$ctrl->SetItem($row,3,($is_dir?'':$info->{size}));
 		$ctrl->SetItem($row,4,gmtToLocalTime($info->{ts}));
+		if ($this->{unix})
+		{
+			$ctrl->SetItem($row,5,$info->{mode});
+			$ctrl->SetItem($row,6,$info->{owner});
+			$ctrl->SetItem($row,7,$info->{group});
+		}
 	}
 
 	# things that might have changed due to rename
@@ -791,16 +808,18 @@ sub setContents
 
 	# We always add ...UP... or ...ROOT...
 
-	my $is_valid = $dir_info && $dir_info ne '-1';
-	my $dir_ts = $is_valid ? $dir_info->{ts} : '';
+	my $is_valid = $dir_info && $dir_info ne '-1';;
 	my $dir_entry_name = $dir eq "/" ? '...ROOT...' : '...UP...';
 	my $dir_info_entry =
 	{
 		is_dir      => 1,
 		dir         => '',
-		ts   		=> $dir_ts,
+		ts   		=> $is_valid ? $dir_info->{ts} : '',
 		size        => '',
 		entry		=> $dir_entry_name,
+		mode   		=> $is_valid ? $dir_info->{mode} : '',
+		owner   	=> $is_valid ? $dir_info->{owner} : '',
+		group   	=> $is_valid ? $dir_info->{group} : '',
 		compare     => '',
 		entries     => {}
 	};
