@@ -12,7 +12,7 @@ use Pub::Utils;
 use Pub::WX::Dialogs;
 
 
-my $dbg_prefs = 0;
+my $dbg_prefs = -1;
 	# 0 = initPrefs and savePrefs calls
 	# -1 = read/write details
 my $dbg_sem = 1;
