@@ -1,9 +1,9 @@
 #---------------------------------------
-# apps::fileClient::Prefs
+# apps::fileClient::fcPrefs
 #---------------------------------------
 # Note that this is entirely different than Pub::Prefs
 
-package apps::fileClient::Prefs;
+package apps::fileClient::fcPrefs;
 use strict;
 use warnings;
 use threads;
@@ -13,13 +13,13 @@ use Pub::WX::Dialogs;
 
 
 my $dbg_prefs = -1;
-	# 0 = initPrefs and savePrefs calls
+	# 0 = initFCPrefs and savePrefs calls
 	# -1 = read/write details
 my $dbg_sem = 1;
 	#  0 = show initial create/open
 	# -1 = show wait and release details
 
-our $prefs_filename;
+our $fc_prefs_filename;
 
 
 BEGIN
@@ -27,21 +27,21 @@ BEGIN
  	use Exporter qw( import );
 	our @EXPORT = (
 
-		'$prefs_filename',		# set at top of fileClient.pm
-		'getPref',				# returns a unary preference with no checking
+		'$fc_prefs_filename',		# set at top of fileClient.pm
+		'getFCPref',				# returns a unary preference with no checking
 
-		'initPrefs',			# called near top of fileClient.pm AppFrame::onInit()
+		'initFCPrefs',			# called near top of fileClient.pm AppFrame::onInit()
 
 		'parseCommandLine',
 			# called from fileClient.pm AppFrame::onInit()
-			# internally calls waitPrefs() and releasePrefs()
+			# internally calls waitFCPrefs() and releaseFCPrefs()
 			# parses command line and returns populated Connection
 			# 	if such is specified on command line
 
-		'waitPrefs',			# called before connection loop in fileClient.pm and at top of ConnectionDialog and PrefsDialog
-		'getPrefs',				# called for connection loop and by ConnectionDialog and PrefsDialog
-		'releasePrefs',			# called after connection loop in fileClient.pm and at bottom of ConnectionDialog and PrefsDialog
-		'writePrefs',			# called by PrefsDialog or ConnectionDialog if prefs changed
+		'waitFCPrefs',			# called before connection loop in fileClient.pm and at top of ConnectionDialog and PrefsDialog
+		'getFCPrefs',				# called for connection loop and by ConnectionDialog and PrefsDialog
+		'releaseFCPrefs',			# called after connection loop in fileClient.pm and at bottom of ConnectionDialog and PrefsDialog
+		'writeFCPrefs',			# called by PrefsDialog or ConnectionDialog if prefs changed
 
 		'getEffectiveDir',		# resolves the dir for Connecton Params
 		'getPrefConnection',	# returns a non-shared copy of Connection by ID
@@ -114,7 +114,7 @@ sub startPrefSemaphore
 }
 
 
-sub waitPrefs
+sub waitFCPrefs
 {
 	return if !$PREFS_MUTEX_NAME;
 	startPrefSemaphore(0) if !$PREFS_SEM;
@@ -135,22 +135,22 @@ sub waitPrefs
 	if (!$rslt)
 	{
 		my $continue = yesNoDialog(undef,
-			"Another process has opened $prefs_filename.\n".
+			"Another process has opened $fc_prefs_filename.\n".
 			"Do you wish to continue waiting (indefinitely)??\n\n".
 			"Pressing 'No' will abandon this process.",
-			"$prefs_filename locked");
+			"$fc_prefs_filename locked");
 		$rslt = $PREFS_SEM->wait() if $continue;
 	}
-	display($dbg_sem+1,0,"waitPrefs()="._def($rslt));
+	display($dbg_sem+1,0,"waitFCPrefs()="._def($rslt));
 	return $rslt;
 }
 
 
-sub releasePrefs
+sub releaseFCPrefs
 {
 	return if !$PREFS_MUTEX_NAME;
 	my $rslt = $PREFS_SEM->release();
-	display($dbg_sem+1,0,"releasePrefs()="._def($rslt));
+	display($dbg_sem+1,0,"releaseFCPrefs()="._def($rslt));
 	return $rslt;
 }
 
@@ -160,13 +160,13 @@ sub releasePrefs
 # Client API
 #----------------------------------------------------
 
-sub getPrefs
+sub getFCPrefs
 {
 	return $prefs;
 }
 
 
-sub getPref
+sub getFCPref
 	# should only be used for unary prefs
 {
 	my ($id) = @_;
@@ -240,7 +240,7 @@ sub argError
 {
 	my ($msg) = @_;
 	error($msg);
-	releasePrefs();
+	releaseFCPrefs();
 	return 0;
 }
 
@@ -265,12 +265,12 @@ sub parseCommandLine
 	# Cannot currently invoke SSL from command line, except by
 	# using existing named connections.
 	#
-	# returns undef if could not waitPrefs()
+	# returns undef if could not waitFCPrefs()
 	# returns 0 if there's no command line, or an error was reported
 	# returns a $connection on success.
 {
 	return 0 if !@ARGV;
-	return undef if !waitPrefs();
+	return undef if !waitFCPrefs();
 
 	my $retval = defaultConnection();
 
@@ -330,29 +330,29 @@ sub parseCommandLine
 			return argError("Unknown command line params: '$lval $rval'");
 		}
 	}
-	releasePrefs();
+	releaseFCPrefs();
 	return $retval;
 }
 
 
 #-----------------------------------------------------
-# initPrefs()
+# initFCPrefs()
 #-----------------------------------------------------
 
 # use Data::Dumper;
 
-sub initPrefs()
-	# returns 0 if could not waitPrefs()
+sub initFCPrefs()
+	# returns 0 if could not waitFCPrefs()
 	# returns 1 otherwise
 {
 	my ($multi_process) = @_;
 
 	display($dbg_prefs,0,"init_prefs()");
 
-	return 1 if !$prefs_filename;
-	return 0 if !waitPrefs();
+	return 1 if !$fc_prefs_filename;
+	return 0 if !waitFCPrefs();
 
-	my $text = getTextFile($prefs_filename);
+	my $text = getTextFile($fc_prefs_filename);
 	if ($text)
 	{
 		$prefs = shared_clone($default_prefs);
@@ -397,28 +397,28 @@ sub initPrefs()
 	}
 	else
 	{
-		warning($dbg_prefs,-1,"Empty or missing $prefs_filename");
+		warning($dbg_prefs,-1,"Empty or missing $fc_prefs_filename");
 	}
 
 	$prefs->{default_local_dir} ||= '/';
 	$prefs->{default_remote_dir} ||= '/';
 
 	# print Dumper($prefs);
-	# writePrefs();
+	# writeFCPrefs();
 
-	releasePrefs();
+	releaseFCPrefs();
 	return 1;
 }
 
 
 
-sub writePrefs
-	# returns undef if could not waitPrefs()
+sub writeFCPrefs
+	# returns undef if could not waitFCPrefs()
 	# returns 0 if it could not write the prefs file
 	# reeturns 1 on success.
 {
 	display($dbg_prefs,0,"write_prefs()");
-	return undef if !waitPrefs();
+	return undef if !waitFCPrefs();
 
 	my $text = '';
 	for my $key (@header_fields)
@@ -442,13 +442,13 @@ sub writePrefs
 			}
 		}
 	}
-	if (!printVarToFile(1,$prefs_filename,$text))
+	if (!printVarToFile(1,$fc_prefs_filename,$text))
 	{
-		releasePrefs();
-		error("Could not write to $prefs_filename");
+		releaseFCPrefs();
+		error("Could not write to $fc_prefs_filename");
 		return 0;
 	}
-	releasePrefs();
+	releaseFCPrefs();
 	return 1;
 
 }

@@ -40,7 +40,7 @@ use Wx::Event qw(
 	EVT_CHECKBOX);
 use Pub::Utils;
 use Pub::WX::Dialogs;
-use apps::fileClient::Prefs;
+use apps::fileClient::fcPrefs;
 use apps::fileClient::Resources;
 use base qw(Wx::Dialog);
 
@@ -110,7 +110,7 @@ sub connect()
 {
     my ($class,$parent) = @_;
 	display($dbg_dlg,0,"ConnectDialog started");
-	return if !waitPrefs();
+	return if !waitFCPrefs();
 
 	# Create the dialog
 
@@ -168,8 +168,8 @@ sub connect()
 	$this->{edit_dirty} = 0;
 	$this->checkEditDirty();
 	my $rslt = $this->ShowModal();
-	writePrefs() if $this->{dirty};
-	releasePrefs();
+	writeFCPrefs() if $this->{dirty};
+	releaseFCPrefs();
 
 	# Start the connection if so directed
 
@@ -353,7 +353,7 @@ sub onButton
 	}
 	elsif ($id == $ID_MOVE_UP || $id == $ID_MOVE_DOWN)
 	{
-		my $prefs = getPrefs();
+		my $prefs = getFCPrefs();
 		my $ctrl = $this->{list_ctrl};
 		my $idx1 = getSelectedItemIndex($ctrl);
 		my $idx2 = ($id == $ID_MOVE_UP) ? $idx1-1 : $idx1+1;
@@ -509,7 +509,7 @@ sub populateListCtrl
 	$ctrl->DeleteAllItems();
 
 	my $row = 0;
-	my $prefs = getPrefs();
+	my $prefs = getFCPrefs();
 	my $connections = $prefs->{connections};
 	for my $connection (@$connections)
 	{
@@ -641,7 +641,7 @@ sub checkEditDirty
 
 	if ($cid)	# without a CID it cannot be saved
 	{
-		my $prefs = getPrefs();
+		my $prefs = getFCPrefs();
 		my $connection = $prefs->{connectionById}->{$cid};
 
 		if (!$connection)		# no connection of this cid exists
@@ -699,7 +699,7 @@ sub updateConnection
 
 	$this->fromControls();
 
-	my $prefs = getPrefs();
+	my $prefs = getFCPrefs();
 	my $conn = $this->{connection};
 	my $cid = $conn->{connection_id};
 	my $exists = $prefs->{connectionById}->{$cid};
@@ -742,7 +742,7 @@ sub deleteSelected
 	# delete the selected connection
 {
 	my ($this) = @_;
-	my $prefs = getPrefs();
+	my $prefs = getFCPrefs();
 	my $conns = $prefs->{connections};
 	my $cid = getSelectedItemText($this->{list_ctrl});
 	display($dbg_dlg,0,"deleteSelected($cid)");

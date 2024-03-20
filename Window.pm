@@ -23,7 +23,7 @@ use Pub::Utils;
 use Pub::WX::Window;
 use Pub::FS::ClientSession;		# for $DEFAULT_PORT
 use apps::fileClient::Pane;
-use apps::fileClient::Prefs;
+use apps::fileClient::fcPrefs;
 use apps::fileClient::Resources;
 use apps::fileClient::PaneThread;
 use apps::fileClient::PaneCommand;

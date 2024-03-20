@@ -1,10 +1,10 @@
 #-------------------------------------------------
-# apps::fileClient::PrefsDialog.pm
+# apps::fileClient::fcPrefsDialog.pm
 #-------------------------------------------------
 # A dialog for editing the (few) 'global' preferences
 # that are not 'connections'.  See Prefs.cpp for details.
 
-package apps::fileClient::PrefsDialog;
+package apps::fileClient::fcPrefsDialog;
 use strict;
 use warnings;
 use threads;
@@ -15,7 +15,7 @@ use Wx::Event qw(
 	EVT_UPDATE_UI_RANGE
 	EVT_IDLE);
 use Pub::Utils;
-use apps::fileClient::Prefs;
+use apps::fileClient::fcPrefs;
 # use apps::fileClient::Resources;
 use base qw(Wx::Dialog);
 
@@ -48,7 +48,7 @@ sub editPrefs()
 {
     my ($class,$parent) = @_;
 	display($dbg_dlg,0,"PrefsDialog started");
-	return if !waitPrefs();
+	return if !waitFCPrefs();
 		# I don't know how much I like this scheme.
 		# Might just be 'first come first served' with only a
 		# local semaphore to stop the dt loop ...
@@ -108,8 +108,8 @@ sub editPrefs()
 	$this->{dirty} = 0;
 	$this->toControls();
 	my $rslt = $this->ShowModal();
-	writePrefs() if $rslt == $ID_SAVE && $this->{dirty};
-	releasePrefs();
+	writeFCPrefs() if $rslt == $ID_SAVE && $this->{dirty};
+	releaseFCPrefs();
 
 	$this->Destroy();
 }
@@ -156,7 +156,7 @@ sub onUpdateUI
 
 	if ($id == $ID_SAVE)	# only button
 	{
-		my $prefs = getPrefs();
+		my $prefs = getFCPrefs();
 		my $restore_startup = $this->{restore_startup}->GetValue() || '';
 		$enabled = $this->{dirty} =
 			($prefs->{restore_startup} ne $restore_startup) ||
@@ -213,7 +213,7 @@ sub validateDirectory
 sub toControls
 {
 	my ($this) = @_;
-	my $prefs = getPrefs();
+	my $prefs = getFCPrefs();
     $this->{restore_startup}	->SetValue($prefs->{restore_startup} || '');
     $this->{default_local_dir}	->ChangeValue($prefs->{default_local_dir});
     $this->{default_remote_dir}	->ChangeValue($prefs->{default_remote_dir});
@@ -227,7 +227,7 @@ sub toControls
 sub fromControls
 {
 	my ($this) = @_;
-	my $prefs = getPrefs();
+	my $prefs = getFCPrefs();
     $prefs->{restore_startup} 	 = $this->{restore_startup}->GetValue() || '';
     $prefs->{default_local_dir}  = $this->{default_local_dir}->GetValue();
     $prefs->{default_remote_dir} = $this->{default_remote_dir}->GetValue();

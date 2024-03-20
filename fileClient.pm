@@ -18,8 +18,8 @@ use Pub::Utils;
 use Pub::WX::Frame;
 use apps::fileClient::Resources;
 use apps::fileClient::Window;
-use apps::fileClient::Prefs;
-use apps::fileClient::PrefsDialog;
+use apps::fileClient::fcPrefs;
+use apps::fileClient::fcPrefsDialog;
 use apps::fileClient::ConnectDialog;
 use base qw(Pub::WX::Frame);
 
@@ -34,7 +34,7 @@ sub new
 
 	warning($dbg_app,-1,"FILE CLIENT STARTED WITH PID($$)");
 
-	return if !initPrefs();
+	return if !initFCPrefs();
 		# we get the prefs first cuz there are preferences
 		# related to how we want to restore the app
 
@@ -46,7 +46,7 @@ sub new
 	# the windows, and later we will NOT do the
 	# auto-start connections loop
 
-	my $how_restore = !@ARGV && getPref('restore_startup') ?
+	my $how_restore = !@ARGV && getFCPref('restore_startup') ?
 		$RESTORE_ALL : $RESTORE_MAIN_RECT;
 
 	Pub::WX::Frame::setHowRestore($how_restore);
@@ -64,17 +64,17 @@ sub new
 		return if !$connection;
 		$this->createPane($ID_CLIENT_WINDOW,undef,$connection)
 	}
-	elsif (!getPref('restore_startup'))
+	elsif (!getFCPref('restore_startup'))
 	{
 		my @start_connections;
-		return if !waitPrefs();
-		for my $shared_connection (@{getPrefs()->{connections}})
+		return if !waitFCPrefs();
+		for my $shared_connection (@{getFCPrefs()->{connections}})
 		{
 			push @start_connections,getPrefConnection(
 				$shared_connection->{connection_id})
 				if $shared_connection->{auto_start};
 		}
-		releasePrefs();
+		releaseFCPrefs();
 		for my $connection (@start_connections)
 		{
 			$this->createPane($ID_CLIENT_WINDOW,undef,$connection);
@@ -111,7 +111,7 @@ sub onCommand
 	my $id = $event->GetId();
 
 	apps::fileClient::ConnectDialog->connect() if $id == $COMMAND_CONNECT;
-	apps::fileClient::PrefsDialog->editPrefs() if $id == $COMMAND_PREFS;
+	apps::fileClient::fcPrefsDialog->editPrefs() if $id == $COMMAND_PREFS;
 }
 
 
@@ -128,17 +128,18 @@ use threads::shared;
 use Pub::Utils;
 use Pub::WX::Main;
 use Pub::WX::AppConfig;
-use apps::fileClient::Prefs;
+use apps::fileClient::fcPrefs;
 use base 'Wx::App';
 
 # Stuff to begin my 'standard' application
 
-$debug_level = -5 if Cava::Packager::IsPackaged();
+# $debug_level = -5 if Cava::Packager::IsPackaged();
 	# set release debug level
+
 openSTDOUTSemaphore("buddySTDOUT") if $ARGV[0];
 setStandardDataDir("buddy");
 
-$prefs_filename = "$data_dir/fileClient.prefs";
+$fc_prefs_filename = "$data_dir/fileClient.prefs";
 $ini_file = "$data_dir/fileClient.ini";
 
 my $frame;

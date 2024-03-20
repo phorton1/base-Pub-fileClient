@@ -33,7 +33,7 @@ use Pub::WX::Dialogs;
 use Pub::FS::FileInfo;
 use Pub::FS::ClientSession;
 use apps::fileClient::Resources;
-use apps::fileClient::Prefs;
+use apps::fileClient::fcPrefs;
 use base qw(Wx::Window);
 
 
@@ -169,10 +169,10 @@ sub new
 		if ($params->{ssl})
 		{
 			$session_params->{SSL} = 1;
-			$session_params->{SSL_CERT_FILE} = getPref('ssl_cert_file');
-			$session_params->{SSL_KEY_FILE}  = getPref('ssl_key_file');
-			$session_params->{SSL_CA_FILE}   = getPref('ssl_ca_file');
-			$session_params->{DEBUG_SSL} 	 = getPref('debug_ssl');
+			$session_params->{SSL_CERT_FILE} = getFCPref('ssl_cert_file');
+			$session_params->{SSL_KEY_FILE}  = getFCPref('ssl_key_file');
+			$session_params->{SSL_CA_FILE}   = getFCPref('ssl_ca_file');
+			$session_params->{DEBUG_SSL} 	 = getFCPref('debug_ssl');
 		}
 
 		$this->{session} = Pub::FS::ClientSession->new($session_params);
