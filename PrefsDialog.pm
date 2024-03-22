@@ -1,10 +1,10 @@
 #-------------------------------------------------
-# apps::fileClient::fcPrefsDialog.pm
+# apps::fileClient::PrefsDialog.pm
 #-------------------------------------------------
 # A dialog for editing the (few) 'global' preferences
 # that are not 'connections'.  See Prefs.cpp for details.
 
-package apps::fileClient::fcPrefsDialog;
+package apps::fileClient::PrefsDialog;
 use strict;
 use warnings;
 use threads;

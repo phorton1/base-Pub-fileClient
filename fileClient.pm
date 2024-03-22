@@ -19,7 +19,7 @@ use Pub::WX::Frame;
 use apps::fileClient::Resources;
 use apps::fileClient::Window;
 use apps::fileClient::fcPrefs;
-use apps::fileClient::fcPrefsDialog;
+use apps::fileClient::PrefsDialog;
 use apps::fileClient::ConnectDialog;
 use base qw(Pub::WX::Frame);
 
@@ -111,7 +111,7 @@ sub onCommand
 	my $id = $event->GetId();
 
 	apps::fileClient::ConnectDialog->connect() if $id == $COMMAND_CONNECT;
-	apps::fileClient::fcPrefsDialog->editPrefs() if $id == $COMMAND_PREFS;
+	apps::fileClient::PrefsDialog->editPrefs() if $id == $COMMAND_PREFS;
 }
 
 
